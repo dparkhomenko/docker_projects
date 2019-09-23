@@ -2,7 +2,7 @@ const express = require('express')
 const app = express()
 
 app.get('/', (request, response) => {
-        response.send('<center><h2>Just a Simple Application for Hillel Devops course</h2><br><a href=http://10.10.20.26:3000/status>Get version</a></center>')
+        response.send('<center><h2>Just a Simple Application</h2><br><a href=http://<<your_ip_address>>:3000/status>Get version</a></center>')
 })
 
 app.get('/status', (request, response) => {
