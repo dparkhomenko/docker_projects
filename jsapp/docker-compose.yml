@@ -1,0 +1,28 @@
+version: '2.2'
+services:
+  nginx:
+    image: nginx:latest
+    container_name: ngx
+    ports:
+      - 8111:80
+    volumes:
+      - ./nginx/domain.conf:/etc/nginx/conf.d/domain.conf
+      - ./nginx/data:/var/data
+    links:
+      - php
+      - redis
+
+  php:
+    build:
+      context: ./php
+    container_name: php
+    ports:
+      - 9000:9000
+    links:
+      - redis
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - 6379:6379
