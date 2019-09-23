@@ -1,0 +1,89 @@
+stages:
+    - build
+    - autotest
+    - push_image
+    - deploy_to_dev
+    - deploy_to_stage
+    - production_approve
+    - deploy_to_prod
+
+
+Build image:
+    stage: build
+    tags:
+        - jsapp-build
+    script:
+        - echo "Building..."
+        - docker build -t $DR_HOST/jsapp:$CI_COMMIT_REF_NAME .
+
+Autotests:
+    stage: autotest
+    tags:
+        - jsapp-build
+    script:
+        - grep FROM Dockerfile
+
+Push image:
+    stage: push_image
+    tags:
+        - jsapp-build
+    script:
+        - echo "Push image..."
+        - docker login $DR_HOST -u $DR_USER -p $DR_PASS
+        - docker push $DR_HOST/jsapp:$CI_COMMIT_REF_NAME
+    when: on_success
+
+Deploy to dev:
+    stage: deploy_to_dev
+    except:
+        - master
+        - develop
+        - tags
+    tags:
+        - jsapp-build
+    script:
+        - echo "Deply to dev..."
+        - docker service create --with-registry-auth --name jsapp --network jsappdevnet -p 3000:3000 $DR_HOST/jsapp:$CI_COMMIT_REF_NAME
+
+Deploy to satge:
+    stage: deploy_to_stage
+    tags:
+        - jsapp-build
+    only:
+        - develop
+    only:
+        - tags
+    script:
+        - echo "Deploying to stage..."
+        - docker login $DR_HOST -u $DR_USER -p $DR_PASS
+        - docker service create --with-registry-auth --name jsapp --network jsappdevnet -p 3000:3000 $DR_HOST/jsapp:$CI_COMMIT_REF_NAME
+    when: manual
+
+Production approve:
+    stage: production_approve
+    tags:
+        - jsapp-build
+    only:
+        - master
+    only:
+        - develop
+    only:
+        - tags
+    script:
+        - echo "Jsapp version $CI_COMMIT_REF_NAME got approved!"
+    when: manual
+
+
+Deploy to prod:
+    stage: deploy_to_prod
+    tags:
+        - jsapp-build
+    only:
+        - master
+    only:
+        - tags
+    script:
+        - echo "Deploying to prod..."
+        - docker login $DR_HOST -u $DR_USER -p $DP_PASS
+        - docker service create --with-registry-auth --name jsapp --network jsappdevnet -p 3000:3000 $DR_HOST/jsapp:$CI_COMMIT_REF_NAME
+    when: manual
