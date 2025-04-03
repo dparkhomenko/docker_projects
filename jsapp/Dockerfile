@@ -1,4 +1,4 @@
-FROM node:8.10.0
+FROM node:23-alpine
 WORKDIR /var/jsapp
 COPY . .
 RUN npm install
